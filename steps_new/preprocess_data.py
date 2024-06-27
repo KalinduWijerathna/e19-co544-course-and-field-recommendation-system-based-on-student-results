@@ -1,12 +1,10 @@
 import logging
 from zenml import step
 import pandas as pd
-from typing import Annotated, Tuple
+from typing import Tuple
 
 def encode_grade(marks):
-
-    '''Encode the marks into grades'''	
-
+    '''Encode the marks into grades'''    
     marks = int(marks)
     if marks > 85:
         return 0  #'A+'
@@ -27,7 +25,7 @@ def encode_grade(marks):
     elif 45 <= marks < 50:
         return 8  #'C-'
     elif 40 <= marks < 45:
-        return 9 #'D+'
+        return 9  #'D+'
     elif 35 <= marks < 40:
         return 10 #'D'
     else:
@@ -35,7 +33,6 @@ def encode_grade(marks):
 
 def merge_small_classes(target_column, threshold=4):
     '''Function to merge small classes into the next larger class'''
-
     value_counts = target_column.value_counts()
     small_classes = value_counts[value_counts < threshold].index
     for small_class in small_classes:
@@ -49,12 +46,8 @@ def merge_small_classes(target_column, threshold=4):
             continue
     return target_column
 
-@step	
-def preprocess_data(df: pd.DataFrame) -> Tuple[
-    Annotated[pd.DataFrame, "features_encoded"],
-    Annotated[pd.DataFrame, "targets_encoded"],
-]:
-
+@step    
+def preprocess_data(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
     '''
     Preprocess the data
     input: df: pd.DataFrame
@@ -62,7 +55,6 @@ def preprocess_data(df: pd.DataFrame) -> Tuple[
         features_encoded: pd.DataFrame, 
         targets_encoded: pd.DataFrame
     '''
-
     try:
         # drop unnecessary columns
         df = df.drop(['Year of enrolment', 'ID'], axis=1)
@@ -81,9 +73,8 @@ def preprocess_data(df: pd.DataFrame) -> Tuple[
             targets.fillna({col: targets[col].median()}, inplace=True)  # Fill NaN with median of the column
 
         # Apply the grade encoding function to each cell in the dataframe
-        features_encoded = features.map(encode_grade)
-        targets_encoded = targets.map(encode_grade)
-
+        features_encoded = features.applymap(encode_grade)
+        targets_encoded = targets.applymap(encode_grade)
 
         for column in targets_encoded.columns:
             # Merge small classes in the target column
